@@ -1,0 +1,9 @@
+numpy==1.19.3
+omegaconf==2.0.6
+pandas==1.2.1
+pytorch-lightning==1.4.8
+torch==1.9.0+cu111
+torch-tb-profiler==0.2.1
+torchaudio==0.9.0
+torchmetrics==0.5.1
+torchvision==0.10.0+cu111

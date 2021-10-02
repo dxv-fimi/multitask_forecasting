@@ -1,0 +1,42 @@
+dataset:
+  train: 'dataset/precipitation/train.csv'
+  test: 'dataset/precipitation/test.csv'
+model:
+  module: ieid
+  encoder_config:
+    module: lstm_encoder
+    params:
+      input_size: 1
+      hidden_size: 16
+      num_layers: 1
+      batch_first: true
+  decoder_config:
+    module: mlp_decoder
+    params:
+      hidden_size: 16
+      num_hidden_layer: 1
+  joint_net_config:
+    module: mlp_joint_net
+    params:
+      hidden_size: 256
+      num_hidden_layer: 1
+  data_config:
+    num_stations: 72
+    win_size: 10
+    normalize_factor: 0.01
+resource:
+  num_workers: 1
+  gpus: -1
+training:
+  batch_size: 32
+  max_epochs: 50
+  loss:
+    func: sum_max_loss
+    params:
+      base_loss:
+        func: MSELoss
+        params:
+          reduction: none
+      alpha: 0.5
+testing:
+  batch_size: 4
