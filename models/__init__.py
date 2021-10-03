@@ -34,7 +34,7 @@ def create_mlp_joint_net(config: Dict):
     config['output_size'] = config.get('output_size', \
         [math.ceil(_last_hidden_size / config['num_stations'])] * config['num_stations'])
     config['num_hidden_layer'] = config.get('num_hidden_layer', 1)
-    return MLPJointNet(**config), config['output_size']
+    return MLPJointNet(**config)
 
 def create_mlp_decoder(config: Dict):
     config['input_size'] = config.get('input_size', 1)
@@ -95,13 +95,13 @@ class IEID(pl.LightningModule):
             self.encoders.append(encoder)
             self.encoding_size.append(encoding_size)
 
+        for i in range(num_stations):
+            self.decoders.append(create_module(decoder_config))
+
         joint_net_config.params.num_stations = self.num_stations
         joint_net_config.params.input_size = self.encoding_size
-        self.joint_net, dec_inp_size = create_module(joint_net_config)
-
-        for i in range(num_stations):
-            decoder_config.params.input_size = dec_inp_size[i]
-            self.decoders.append(create_module(decoder_config))
+        joint_net_config.params.output_size = self.num_stations * [decoder_config.params.input_size]
+        self.joint_net = create_module(joint_net_config)
 
         self.loss = create_loss(config.training.loss)
 

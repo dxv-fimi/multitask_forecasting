@@ -13,6 +13,7 @@ model:
   decoder_config:
     module: mlp_decoder
     params:
+      input_size: 16
       hidden_size: 16
       num_hidden_layer: 1
   joint_net_config:
@@ -29,7 +30,7 @@ resource:
   gpus: -1
 training:
   batch_size: 32
-  max_epochs: 50
+  max_epochs: 200
   loss:
     func: sum_max_loss
     params:
