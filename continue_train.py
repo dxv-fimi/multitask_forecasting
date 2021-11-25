@@ -17,29 +17,25 @@ def main():
     conf = OmegaConf.load(args.checkpoint + 'hparams.yaml').config
     module = model_dict[conf.model.module]
     model = module.load_from_checkpoint(args.checkpoint + 'checkpoint.ckpt')
-    model.eval()
-    test_dataset = PrecipationDataset(
+    train_dataset = PrecipationDataset(
         data_path=conf.dataset.train,
         win_size=conf.model.data_config.win_size,
         normalize_factor=conf.model.data_config.normalize_factor
     )
-    test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=1)
-    Y_hat = []
-    Y = []
-
-    with torch.no_grad():
-        for i, sample in enumerate(test_dataloader):
-            x = sample['x']
-            Y_hat.append(model(x))
-            Y.append(sample['y'])
-
-    Y = torch.cat(Y, dim=0) / conf.model.data_config.normalize_factor
-    Y_hat = torch.cat(Y_hat, dim=0) / conf.model.data_config.normalize_factor
-
-    mse_loss = torch.nn.MSELoss()
-    print('MSE:', mse_loss(Y_hat, Y).item())
-    mae_loss = torch.nn.L1Loss()
-    print('MAE:', mae_loss(Y_hat, Y).item())
+    train_dataloader = DataLoader(
+        dataset=train_dataset,
+        batch_size=conf.training.batch_size,
+        num_workers=conf.resource.num_workers,
+        shuffle=True
+    )
+    trainer = pl.Trainer(
+        gpus=conf.resource.gpus,
+        max_epochs=conf.training.max_epochs
+    )
+    trainer.fit(
+        model=model,
+        train_dataloaders=train_dataloader
+    )
 
 
 if __name__ == '__main__':

@@ -1,0 +1,55 @@
+dataset:
+  module: 'aqi'
+  train: 'dataset/aqi/train'
+  test: 'dataset/aqi/test'
+model:
+  module: ieid
+  encoder_config:
+    module: lstm_encoder
+    params:
+      input_size: 1
+      hidden_size: 16
+      num_layers: 1
+      batch_first: true
+  decoder_config:
+    module: mlp_decoder
+    params:
+      input_size: 16
+      hidden_size: 16
+      num_hidden_layer: 1
+  joint_net_config:
+    module: mlp_joint_net
+    params:
+      hidden_size: 256
+      num_hidden_layer: 1
+  data_config:
+    num_stations: 72
+    win_size: 10
+    normalize_factor: 0.01
+resource:
+  num_workers: 1
+  gpus: -1
+training:
+  mode: 'multitask'
+    task:
+      - 'Task 00'
+      - 'Task 01'
+      - 'Task 02'
+      - 'Task 03'
+      - 'Task 04'
+      - 'Task 05'
+      - 'Task 06'
+      - 'Task 07'
+      - 'Task 08'
+  batch_size: 32
+  max_epochs: 200
+  loss:
+    func: sum_max_loss
+    params:
+      base_loss:
+        func: MSELoss
+        params:
+          reduction: none
+      alpha: 0.5
+testing:
+  batch_size: 4

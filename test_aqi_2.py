@@ -2,7 +2,7 @@ import argparse
 
 from omegaconf import OmegaConf
 
-from data.precipitation import PrecipationDataset
+from data.aqi_2 import create_data_loader
 from models import *
 
 parser = argparse.ArgumentParser(description="trainer")
@@ -18,12 +18,13 @@ def main():
     module = model_dict[conf.model.module]
     model = module.load_from_checkpoint(args.checkpoint + 'checkpoint.ckpt')
     model.eval()
-    test_dataset = PrecipationDataset(
-        data_path=conf.dataset.train,
+    train_dataloader, test_dataloader = create_data_loader(
+        data_path=conf.dataset.data,
         win_size=conf.model.data_config.win_size,
-        normalize_factor=conf.model.data_config.normalize_factor
+        batch_size=conf.training.batch_size,
+        num_workers=conf.resource.num_workers,
+        normalization_factor=conf.model.data_config.normalize_factor
     )
-    test_dataloader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=1)
     Y_hat = []
     Y = []
 
@@ -36,10 +37,21 @@ def main():
     Y = torch.cat(Y, dim=0) / conf.model.data_config.normalize_factor
     Y_hat = torch.cat(Y_hat, dim=0) / conf.model.data_config.normalize_factor
 
+    print(Y[:10])
+    print(Y[:10])
     mse_loss = torch.nn.MSELoss()
     print('MSE:', mse_loss(Y_hat, Y).item())
     mae_loss = torch.nn.L1Loss()
     print('MAE:', mae_loss(Y_hat, Y).item())
+    print('MAE 0', mae_loss(Y_hat[:, 0], Y[:, 0]).item())
+    print('MAE 1', mae_loss(Y_hat[:, 1], Y[:, 1]).item())
+    
+    print('MAPE', mape_loss(Y_hat, Y).item())
+    print('MAPE 0', mape_loss(Y_hat[:, 0], Y[:, 0]).item())
+    print('MAPE 1', mape_loss(Y_hat[:, 1], Y[:, 1]).item())
+    
+def mape_loss(y_hat, y):
+    return torch.mean(torch.abs((y_hat - y) / y))
 
 
 if __name__ == '__main__':

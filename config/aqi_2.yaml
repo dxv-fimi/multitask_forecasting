@@ -1,0 +1,42 @@
+dataset:
+  data: './dataset/aqi_2/data_clean_5000.csv'
+model:
+  module: ieid
+  encoder_config:
+    module: lstm_encoder
+    params:
+      input_size: 1
+      hidden_size: 128
+      num_layers: 2
+      batch_first: true
+  decoder_config:
+    module: mlp_decoder
+    params:
+      input_size: 128
+      hidden_size: 128
+      num_hidden_layer: 2
+  joint_net_config:
+    module: mlp_joint_net
+    params:
+      hidden_size: 1024
+      num_hidden_layer: 2
+  data_config:
+    num_stations: 2
+    win_size: 25
+    normalize_factor: 0.02
+resource:
+  num_workers: 1
+  gpus: 0
+training:
+  batch_size: 32
+  max_epochs: 200
+  loss:
+    func: sum_max_loss
+    params:
+      base_loss:
+        func: MSELoss
+        params:
+          reduction: none
+      alpha: 0.5
+testing:
+  batch_size: 4
